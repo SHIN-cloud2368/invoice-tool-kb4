@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>請求書・領収書 作成ツール - 株式会社KB4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        header h1 { font-size: 22px; font-weight: 600; }
+        header p { font-size: 13px; color: #8899aa; margin-top: 4px; }
+        .container {
+            max-width: 720px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8e8e8;
+        }
+        .doc-type-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .doc-type-btn {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .doc-type-btn:hover { border-color: #4a90d9; background: #f8fbff; }
+        .doc-type-btn.active {
+            border-color: #4a90d9;
+            background: #eef5ff;
+            color: #2563eb;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        .form-row .form-group { flex: 1; }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: #4a90d9; box-shadow: 0 0 0 3px rgba(74,144,217,0.1); }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        .items-table th {
+            background: #1a1a2e;
+            color: white;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: left;
+        }
+        .items-table th:first-child { border-radius: 6px 0 0 0; }
+        .items-table th:last-child { border-radius: 0 6px 0 0; }
+        .items-table td {
+            padding: 6px 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .items-table input {
+            padding: 8px;
+            font-size: 13px;
+        }
+        .items-table .col-name { width: 40%; }
+        .items-table .col-qty { width: 12%; }
+        .items-table .col-price { width: 16%; }
+        .items-table .col-amount { width: 16%; text-align: right; }
+        .items-table .col-tax { width: 8%; text-align: center; }
+        .items-table .col-action { width: 8%; text-align: center; }
+        .amount-display {
+            padding: 8px 10px;
+            background: #f8f8f8;
+            border-radius: 6px;
+            text-align: right;
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-add {
+            background: #f0f0f0;
+            color: #555;
+            margin-top: 8px;
+        }
+        .btn-add:hover { background: #e0e0e0; }
+        .btn-remove {
+            background: none;
+            color: #cc3333;
+            font-size: 18px;
+            padding: 4px 8px;
+        }
+        .btn-remove:hover { background: #fff0f0; border-radius: 4px; }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2563eb, #4a90d9);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,0.3); }
+        .btn-submit:active { transform: translateY(0); }
+        .summary-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            border-top: 2px solid #333;
+            margin-top: 4px;
+            padding-top: 10px;
+        }
+        .summary-label { color: #666; }
+        .tax-check { width: auto; margin-right: 4px; }
+        .optional-section { margin-top: 12px; }
+        .optional-section summary {
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a90d9;
+            padding: 8px 0;
+        }
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 14px 20px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .flash-success a {
+            color: #155724;
+            font-weight: 600;
+        }
+        .history-list {
+            list-style: none;
+        }
+        .history-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        .history-list li:hover { background: #f8f8f8; }
+        .history-list a { color: #2563eb; text-decoration: none; font-weight: 500; }
+        .history-list a:hover { text-decoration: underline; }
+        .history-date { color: #999; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>請求書・領収書 作成ツール</h1>
+    <p>株式会社KB4</p>
+</header>
+
+<div class="container">
+    {% if message %}
+    <div class="flash-success">
+        <span>{{ message }}</span>
+        {% if download_url %}
+        <a href="{{ download_url }}" download>ダウンロード</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/create" id="mainForm">
+    <!-- 書類種別 -->
+    <div class="card">
+        <h2>書類種別</h2>
+        <div class="doc-type-selector">
+            <div class="doc-type-btn active" data-type="invoice" onclick="selectType('invoice')">請求書</div>
+            <div class="doc-type-btn" data-type="receipt" onclick="selectType('receipt')">領収書</div>
+        </div>
+        <input type="hidden" name="doc_type" id="doc_type" value="invoice">
+    </div>
+
+    <!-- 基本情報 -->
+    <div class="card">
+        <h2>基本情報</h2>
+        <div class="form-group">
+            <label>宛先（会社名）</label>
+            <input type="text" name="recipient" required placeholder="例: ステンレス光">
+        </div>
+        <div class="form-group">
+            <label>件名</label>
+            <input type="text" name="subject" value="商品代" placeholder="例: 商品請求書">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>日付</label>
+                <input type="date" name="date" value="{{ today }}">
+            </div>
+            <div class="form-group">
+                <label>書類番号</label>
+                <input type="text" name="number" value="{{ default_number }}" placeholder="自動生成">
+            </div>
+        </div>
+    </div>
+
+    <!-- 明細 -->
+    <div class="card">
+        <h2>明細</h2>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="col-name">品名</th>
+                    <th class="col-qty">数量</th>
+                    <th class="col-price">単価</th>
+                    <th class="col-amount">金額</th>
+                    <th class="col-tax" id="th-reduced">軽減</th>
+                    <th class="col-action"></th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <tr class="item-row">
+                    <td><input type="text" name="item_name[]" placeholder="品名" required></td>
+                    <td><input type="number" name="item_qty[]" value="1" min="1" oninput="calcAmounts()"></td>
+                    <td><input type="number" name="item_price[]" value="0" min="0" oninput="calcAmounts()"></td>
+                    <td class="amount-display col-amount">0</td>
+                    <td class="col-tax"><input type="checkbox" name="item_reduced[]" value="0" class="tax-check"></td>
+                    <td class="col-action"><button type="button" class="btn btn-remove" onclick="removeRow(this)">×</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-add" onclick="addRow()">＋ 明細を追加</button>
+
+        <div style="margin-top: 16px;">
+            <div class="summary-row"><span class="summary-label">小計</span><span id="subtotal">¥0</span></div>
+            <div class="summary-row"><span class="summary-label" id="tax-label">消費税 (10%)</span><span id="tax-amount">¥0</span></div>
+            <div class="summary-row total"><span class="summary-label">合計</span><span id="total">¥0</span></div>
+        </div>
+    </div>
+
+    <!-- 請求書オプション -->
+    <div class="card" id="invoice-options">
+        <h2>請求書オプション</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>消費税率 (%)</label>
+                <input type="number" name="tax_rate" id="tax_rate" value="10" min="0" max="100" oninput="calcAmounts()">
+            </div>
+            <div class="form-group">
+                <label>支払い期限</label>
+                <input type="date" name="due_date">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>納品先</label>
+            <input type="text" name="delivery_address" placeholder="任意">
+        </div>
+        <div class="form-group">
+            <label>振込先</label>
+            <input type="text" name="bank_info" value="住信SBIネット銀行 法人第一支店（106）普通 1833480 株式会社KB4">
+        </div>
+    </div>
+
+    <!-- 領収書オプション -->
+    <div class="card" id="receipt-options" style="display:none;">
+        <h2>領収書オプション</h2>
+        <div class="form-group">
+            <label>注文番号</label>
+            <input type="text" name="order_number" placeholder="任意">
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-submit">PDF を作成</button>
+    </form>
+
+    <!-- 作成履歴 -->
+    {% if files %}
+    <div class="card" style="margin-top: 20px;">
+        <h2>作成済みファイル</h2>
+        <ul class="history-list">
+            {% for f in files %}
+            <li>
+                <a href="/download/{{ f.name }}">{{ f.display }}</a>
+                <span class="history-date">{{ f.date }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function selectType(type) {
+    document.getElementById('doc_type').value = type;
+    document.querySelectorAll('.doc-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    document.getElementById('invoice-options').style.display = type === 'invoice' ? 'block' : 'none';
+    document.getElementById('receipt-options').style.display = type === 'receipt' ? 'block' : 'none';
+    // 軽減税率列の表示切替
+    const reduced = type === 'receipt';
+    document.getElementById('th-reduced').style.display = reduced ? '' : 'none';
+    document.querySelectorAll('.tax-check').forEach(cb => {
+        cb.closest('td').style.display = reduced ? '' : 'none';
+    });
+    calcAmounts();
+}
+
+function addRow() {
+    const tbody = document.getElementById('items-body');
+    const idx = tbody.children.length;
+    const isReceipt = document.getElementById('doc_type').value === 'receipt';
+    const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    tr.innerHTML = `
+        <td><input type="text" name="item_name[]" placeholder="品名" required></td>
+        <td><input type="number" name="item_qty[]" value="1" min="1" oninput="calcAmounts()"></td>
+        <td><input type="number" name="item_price[]" value="0" min="0" oninput="calcAmounts()"></td>
+        <td class="amount-display col-amount">0</td>
+        <td class="col-tax" style="display:${isReceipt?'':'none'}"><input type="checkbox" name="item_reduced[]" value="${idx}" class="tax-check"></td>
+        <td class="col-action"><button type="button" class="btn btn-remove" onclick="removeRow(this)">×</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function removeRow(btn) {
+    const tbody = document.getElementById('items-body');
+    if (tbody.children.length > 1) {
+        btn.closest('tr').remove();
+        calcAmounts();
+    }
+}
+
+function calcAmounts() {
+    const rows = document.querySelectorAll('.item-row');
+    let subtotal = 0;
+    rows.forEach(row => {
+        const qty = parseInt(row.querySelector('[name="item_qty[]"]').value) || 0;
+        const price = parseInt(row.querySelector('[name="item_price[]"]').value) || 0;
+        const amount = qty * price;
+        row.querySelector('.col-amount').textContent = amount.toLocaleString();
+        subtotal += amount;
+    });
+
+    const docType = document.getElementById('doc_type').value;
+    const taxRate = parseInt(document.getElementById('tax_rate').value) || 10;
+    let tax, total;
+
+    if (docType === 'receipt') {
+        // 軽減税率（内税 8%）
+        tax = Math.floor(subtotal * 0.08 / 1.08);
+        total = subtotal;
+        document.getElementById('tax-label').textContent = '消費税 (軽減8% 内税)';
+    } else {
+        tax = Math.floor(subtotal * taxRate / 100);
+        total = subtotal + tax;
+        document.getElementById('tax-label').textContent = `消費税 (${taxRate}%)`;
+    }
+
+    document.getElementById('subtotal').textContent = '¥' + subtotal.toLocaleString();
+    document.getElementById('tax-amount').textContent = (docType === 'receipt' ? '(¥' + tax.toLocaleString() + ')' : '¥' + tax.toLocaleString());
+    document.getElementById('total').textContent = '¥' + total.toLocaleString();
+}
+
+// 初期化
+selectType('invoice');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+output/
+__pycache__/
+*.pyc
+電子印鑑_透過.png
+.DS_Store
