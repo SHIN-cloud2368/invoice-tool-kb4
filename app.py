@@ -7,11 +7,17 @@
 
 import os
 import datetime
+import hashlib
+import secrets
 import urllib.parse
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for, session
 from create_document import create_receipt, create_invoice, OUTPUT_DIR
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+# 管理者パスワード（環境変数で設定可能）
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "kb4admin")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,8 +43,7 @@ def index():
     default_number = today.strftime("%Y%m%d") + "-001"
     return render_template("index.html",
                            today=today.isoformat(),
-                           default_number=default_number,
-                           files=get_output_files())
+                           default_number=default_number)
 
 
 @app.route("/create", methods=["POST"])
@@ -134,17 +139,55 @@ def create():
     return render_template("index.html",
                            today=today.isoformat(),
                            default_number=default_number,
-                           files=get_output_files(),
                            message=f"{doc_label}を作成しました: {recipient}",
                            download_url=url_for("download", filename=filename))
 
 
 @app.route("/download/<path:filename>")
 def download(filename):
+    # ファイル名にパストラバーサルが含まれていないか確認
+    if ".." in filename or filename.startswith("/"):
+        return "不正なリクエストです", 400
     filepath = os.path.join(OUTPUT_DIR, filename)
     if os.path.exists(filepath):
         return send_file(filepath, as_attachment=True, download_name=filename)
     return "ファイルが見つかりません", 404
+
+
+# --- 管理者ページ ---
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin():
+    if request.method == "POST" and not session.get("admin"):
+        password = request.form.get("password", "")
+        if password == ADMIN_PASSWORD:
+            session["admin"] = True
+            return redirect(url_for("admin"))
+        else:
+            return render_template("admin.html", logged_in=False, error="パスワードが違います")
+
+    if session.get("admin"):
+        return render_template("admin.html", logged_in=True, files=get_output_files())
+    return render_template("admin.html", logged_in=False)
+
+
+@app.route("/admin/delete", methods=["POST"])
+def admin_delete():
+    if not session.get("admin"):
+        return redirect(url_for("admin"))
+    filename = request.form.get("filename", "")
+    if ".." in filename or filename.startswith("/"):
+        return "不正なリクエストです", 400
+    filepath = os.path.join(OUTPUT_DIR, filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    return redirect(url_for("admin"))
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin", None)
+    return redirect(url_for("admin"))
 
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)

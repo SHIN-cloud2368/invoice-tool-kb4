@@ -339,20 +339,6 @@
     <button type="submit" class="btn btn-submit">PDF を作成</button>
     </form>
 
-    <!-- 作成履歴 -->
-    {% if files %}
-    <div class="card" style="margin-top: 20px;">
-        <h2>作成済みファイル</h2>
-        <ul class="history-list">
-            {% for f in files %}
-            <li>
-                <a href="/download/{{ f.name }}">{{ f.display }}</a>
-                <span class="history-date">{{ f.date }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
 </div>
 
 <script>
