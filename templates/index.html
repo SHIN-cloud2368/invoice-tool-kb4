@@ -231,9 +231,17 @@
     <div class="flash-success">
         <span>{{ message }}</span>
         {% if download_url %}
-        <a href="{{ download_url }}" download>ダウンロード</a>
+        <a href="{{ download_url }}" download id="auto-download">ダウンロード</a>
         {% endif %}
     </div>
+    {% endif %}
+    {% if download_url %}
+    <script>
+        // PDF作成後に自動ダウンロード
+        window.addEventListener('load', function() {
+            document.getElementById('auto-download').click();
+        });
+    </script>
     {% endif %}
 
     <form method="POST" action="/create" id="mainForm">
