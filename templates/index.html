@@ -344,7 +344,12 @@
         </div>
     </div>
 
-    <button type="submit" class="btn btn-submit">PDF を作成</button>
+    <button type="submit" class="btn btn-submit" id="submit-btn" onclick="showLoading()">PDF を作成</button>
+    <div id="loading" style="display:none; text-align:center; padding:20px;">
+        <div style="display:inline-block; width:30px; height:30px; border:3px solid #ddd; border-top:3px solid #2563eb; border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <p style="margin-top:10px; color:#666; font-size:14px;">PDF を作成中です...しばらくお待ちください</p>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     </form>
 
 </div>
@@ -420,6 +425,11 @@ function calcAmounts() {
     document.getElementById('subtotal').textContent = '¥' + subtotal.toLocaleString();
     document.getElementById('tax-amount').textContent = (docType === 'receipt' ? '(¥' + tax.toLocaleString() + ')' : '¥' + tax.toLocaleString());
     document.getElementById('total').textContent = '¥' + total.toLocaleString();
+}
+
+function showLoading() {
+    document.getElementById('submit-btn').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
 }
 
 // 初期化
