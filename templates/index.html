@@ -287,7 +287,7 @@
             <tbody id="items-body">
                 <tr class="item-row">
                     <td><input type="text" name="item_name[]" placeholder="JANコードと型番を入力ください" required></td>
-                    <td><input type="number" name="item_qty[]" value="1" min="1" oninput="calcAmounts()"></td>
+                    <td><input type="number" name="item_qty[]" value="10" min="1" oninput="calcAmounts()"></td>
                     <td><input type="number" name="item_price[]" value="0" min="0" oninput="calcAmounts()"></td>
                     <td class="amount-display col-amount">0</td>
                     <td class="col-tax"><input type="checkbox" name="item_reduced[]" value="0" class="tax-check"></td>
@@ -366,7 +366,7 @@ function addRow() {
     tr.className = 'item-row';
     tr.innerHTML = `
         <td><input type="text" name="item_name[]" placeholder="JANコードと型番を入力ください" required></td>
-        <td><input type="number" name="item_qty[]" value="1" min="1" oninput="calcAmounts()"></td>
+        <td><input type="number" name="item_qty[]" value="10" min="1" oninput="calcAmounts()"></td>
         <td><input type="number" name="item_price[]" value="0" min="0" oninput="calcAmounts()"></td>
         <td class="amount-display col-amount">0</td>
         <td class="col-tax" style="display:${isReceipt?'':'none'}"><input type="checkbox" name="item_reduced[]" value="${idx}" class="tax-check"></td>
