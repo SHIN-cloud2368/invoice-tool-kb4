@@ -132,15 +132,22 @@ def create():
         filepath = create_invoice(data)
 
     filename = os.path.basename(filepath)
+    doc_label = "領収書" if doc_type == "receipt" else "請求書"
+    return redirect(url_for("done", message=f"{doc_label}を作成しました: {recipient}", file=filename))
+
+
+@app.route("/done")
+def done():
     today = datetime.date.today()
     default_number = today.strftime("%Y%m%d") + "-001"
-
-    doc_label = "領収書" if doc_type == "receipt" else "請求書"
+    message = request.args.get("message", "")
+    filename = request.args.get("file", "")
+    download_url = url_for("download", filename=filename) if filename else None
     return render_template("index.html",
                            today=today.isoformat(),
                            default_number=default_number,
-                           message=f"{doc_label}を作成しました: {recipient}",
-                           download_url=url_for("download", filename=filename))
+                           message=message,
+                           download_url=download_url)
 
 
 @app.route("/download/<path:filename>")
